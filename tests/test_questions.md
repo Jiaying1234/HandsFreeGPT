@@ -20,16 +20,12 @@ Use these questions to check whether the assistant answers from the Sunrise Bake
 
 5. What are the main ingredients in the garlic herb focaccia?
    - correct answer: Wheat flour, water, olive oil, garlic, herbs, yeast, and salt.
-   - ai answer: The main ingredients in the garlic herb focaccia are wheat flour, water, olive oil, garlic, herbs, yeast, and salt.
+   - ai answer: Wheat flour, water, olive oil, garlic, herbs, yeast, and salt.
 
-6. What should someone with a serious allergy do?
-   - correct answer: Contact the bakery with the exact item and allergy and speak with bakery staff before ordering. Do not rely on the allergen summary alone because cross-contact is possible.
-   - ai answer:
-
-7. What is the price of a blueberry muffin?
+6. What is the price of a blueberry muffin?
    - correct answer: The documents do not list a blueberry muffin, so the assistant should say it does not know rather than invent a price.
-   - ai answer:
+   - ai answer: I do not know.
 
-8. Does the bakery offer unlimited product availability?
+7. Does the bakery offer unlimited product availability?
    - correct answer: No. Items are baked in small batches and are available only while stocks last. Seasonal items can sell out early.
-   - ai answer:
+   - ai answer: No, items are available while stocks last, and some seasonal items may sell out before the end of their stated availability period.

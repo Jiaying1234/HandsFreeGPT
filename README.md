@@ -26,7 +26,7 @@ All business data in /data is fictional sample data for a made-up bakery
 
 ## Roadmap
 - [done] M1: Typed Q&A from documents
-- [ ] M2: Test set and accuracy score
+- [done] M2: Test set and accuracy score
 - [ ] M3: Spoken answers (text-to-speech)
 - [ ] M4: Voice input and wake word
 - [ ] M5: Proper retrieval for larger document sets
