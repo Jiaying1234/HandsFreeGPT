@@ -3,10 +3,13 @@
 from pathlib import Path
 import os
 import sys
+import tempfile
 
 from dotenv import load_dotenv
 from openai import OpenAI
 import pyttsx3
+import sounddevice as sd
+import soundfile as sf
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -65,11 +68,44 @@ def AIspeak(text: str) -> None:
     engine.runAndWait()
 
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print('Usage: python src/ask.py "Your question"')
-        raise SystemExit(1)
+def listen() -> str:
+    """Record a short microphone clip and transcribe it with OpenAI."""
+    load_dotenv()
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key or api_key == "your_api_key_here":
+        raise RuntimeError("Set OPENAI_API_KEY in your local .env file first.")
 
-    answer = ask(" ".join(sys.argv[1:]))
+    sample_rate = 16_000
+    duration = float(os.getenv("RECORD_SECONDS", "6"))
+    print(f"Listening for up to {duration:g} seconds...")
+    recording = sd.rec(
+        int(duration * sample_rate),
+        samplerate=sample_rate,
+        channels=1,
+        dtype="int16",
+    )
+    sd.wait()
+
+    audio_path = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as audio_file:
+            audio_path = audio_file.name
+        sf.write(audio_path, recording, sample_rate, subtype="PCM_16")
+        client = OpenAI(api_key=api_key)
+        with open(audio_path, "rb") as audio_file:
+            transcript = client.audio.transcriptions.create(
+                model=os.getenv("OPENAI_TRANSCRIBE_MODEL", "gpt-4o-mini-transcribe"),
+                file=audio_file,
+            )
+        return transcript.text
+    finally:
+        if audio_path:
+            os.unlink(audio_path)
+
+
+if __name__ == "__main__":
+    question = " ".join(sys.argv[1:]) if len(sys.argv) >= 2 else listen()
+    print(f"You asked: {question}")
+    answer = ask(question)
     print(answer)
     AIspeak(answer)
