@@ -3,10 +3,12 @@
 from pathlib import Path
 import os
 import sys
+import tempfile
+import winsound
+import wave
 
 from dotenv import load_dotenv
 from openai import OpenAI
-import pyttsx3
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -58,11 +60,35 @@ def ask(question: str) -> str:
     return response.choices[0].message.content or "I could not generate an answer."
 
 
-def AIspeak(text: str) -> None:
-    """Read the answer aloud using a voice installed on Windows."""
-    engine = pyttsx3.init()
-    engine.say(text)
-    engine.runAndWait()
+def speak(text: str) -> None:
+    """Generate and play spoken audio using OpenAI's text-to-speech API."""
+    load_dotenv()
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key or api_key == "your_api_key_here":
+        raise RuntimeError("Set OPENAI_API_KEY in your local .env file first.")
+
+    client = OpenAI(api_key=api_key)
+    response = client.audio.speech.create(
+        model=os.getenv("OPENAI_TTS_MODEL", "gpt-4o-mini-tts",),
+        voice=os.getenv("OPENAI_TTS_VOICE", "nova"),
+        input=text,
+        response_format="pcm",
+        instructions="Speak in an energetic, youthful and natural tone.",
+    )
+
+    audio_path = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as audio_file:
+            audio_path = audio_file.name
+        with wave.open(audio_path, "wb") as wav_file:
+            wav_file.setnchannels(1)
+            wav_file.setsampwidth(2)
+            wav_file.setframerate(24000)
+            wav_file.writeframes(response.read())
+        winsound.PlaySound(audio_path, winsound.SND_FILENAME)
+    finally:
+        if audio_path:
+            Path(audio_path).unlink(missing_ok=True)
 
 
 if __name__ == "__main__":
@@ -72,4 +98,4 @@ if __name__ == "__main__":
 
     answer = ask(" ".join(sys.argv[1:]))
     print(answer)
-    AIspeak(answer)
+    speak(answer)
