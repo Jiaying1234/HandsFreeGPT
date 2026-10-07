@@ -25,7 +25,7 @@ All business data in /data is fictional sample data for a made-up bakery
 - Transparent: open source, so you can see what happens to your data
 
 ## Roadmap
-- [ ] M1: Typed Q&A from documents
+- [done] M1: Typed Q&A from documents
 - [ ] M2: Test set and accuracy score
 - [ ] M3: Spoken answers (text-to-speech)
 - [ ] M4: Voice input and wake word

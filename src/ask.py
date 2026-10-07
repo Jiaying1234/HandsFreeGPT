@@ -38,10 +38,11 @@ def ask(question: str) -> str:
             {
                 "role": "system",
                 "content": (
-                    "You are the Sunrise Bakes assistant. Answer only using the "
-                    "provided documents. If the documents do not contain the answer, "
-                    "say that you do not know. For serious allergy questions, advise "
-                    "the customer to speak with bakery staff.\n\n"
+                    "You are the Sunrise Bakes assistant. Answer the user's question using only "
+                    "the provided documents. Include relevant additional details from the "
+                    "documents, such as item size, quantity, ingredients, availability, or "
+                    "ordering requirements, when they helpfully clarify the answer. Do not add "
+                    "unrelated information or guess. If the documents do not contain the answer, "
                     f"DOCUMENTS:\n{reference_text}"
                 ),
             },
