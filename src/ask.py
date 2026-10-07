@@ -6,6 +6,7 @@ import sys
 
 from dotenv import load_dotenv
 from openai import OpenAI
+import pyttsx3
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -57,9 +58,18 @@ def ask(question: str) -> str:
     return response.choices[0].message.content or "I could not generate an answer."
 
 
+def AIspeak(text: str) -> None:
+    """Read the answer aloud using a voice installed on Windows."""
+    engine = pyttsx3.init()
+    engine.say(text)
+    engine.runAndWait()
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print('Usage: python src/ask.py "Your question"')
         raise SystemExit(1)
 
-    print(ask(" ".join(sys.argv[1:])))
+    answer = ask(" ".join(sys.argv[1:]))
+    print(answer)
+    AIspeak(answer)
