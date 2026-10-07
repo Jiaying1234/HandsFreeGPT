@@ -1,11 +1,26 @@
 # Sunrise Bakes Allergen Information
 
-Sunrise Bakes uses wheat, milk, eggs, soy, peanuts, and tree nuts in the kitchen.
+This table lists ingredients that contain common allergens in each menu item.
+Recipes and supplier products can change, so please confirm before ordering if
+you have an allergy. Items are made in a shared home kitchen that handles wheat,
+milk, eggs, soy, peanuts, tree nuts, and sesame. Cross-contact is possible; we
+cannot promise any item is allergen-free.
 
-- Croissants contain wheat, milk, and eggs.
-- Blueberry muffins contain wheat, milk, and eggs.
-- Cinnamon rolls contain wheat, milk, and eggs. They may contain traces of tree nuts.
-- Garlic herb focaccia contains wheat.
-- Cakes commonly contain wheat, milk, and eggs.
+| Menu item | Allergens used as ingredients |
+| --- | --- |
+| Country sourdough boule | Wheat (gluten) |
+| Kaya coconut buns | Wheat (gluten), milk, eggs |
+| Garlic herb focaccia | Wheat (gluten) |
+| Butter croissant | Wheat (gluten), milk, eggs |
+| Pandan gula melaka muffin | Wheat (gluten), milk, eggs |
+| Cinnamon roll | Wheat (gluten), milk, eggs |
+| Dark chocolate sea-salt brownie | Wheat (gluten), milk, eggs, soy |
+| Lemon drizzle loaf | Wheat (gluten), milk, eggs |
+| Durian cream puffs | Wheat (gluten), milk, eggs |
+| Pineapple tarts | Wheat (gluten), milk, eggs |
 
-Because products are prepared in a shared kitchen, cross-contact is possible. Customers with serious allergies should speak with bakery staff before ordering.
+The kaya buns contain coconut, which is a tree nut for some allergy labelling
+purposes. Chocolate and other packaged ingredients may have supplier
+cross-contact warnings not reflected in this summary. Contact us with the exact
+item and allergy before ordering; for a serious allergy, please do not rely on
+this table alone.
