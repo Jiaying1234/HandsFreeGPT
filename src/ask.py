@@ -2,8 +2,11 @@
 
 from pathlib import Path
 import os
+import re
 import sys
 import tempfile
+import threading
+import tkinter as tk
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -68,24 +71,8 @@ def AIspeak(text: str) -> None:
     engine.runAndWait()
 
 
-def listen() -> str:
-    """Record a short microphone clip and transcribe it with OpenAI."""
-    load_dotenv()
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key or api_key == "your_api_key_here":
-        raise RuntimeError("Set OPENAI_API_KEY in your local .env file first.")
-
-    sample_rate = 16_000
-    duration = float(os.getenv("RECORD_SECONDS", "6"))
-    print(f"Listening for up to {duration:g} seconds...")
-    recording = sd.rec(
-        int(duration * sample_rate),
-        samplerate=sample_rate,
-        channels=1,
-        dtype="int16",
-    )
-    sd.wait()
-
+def transcribe_recording(recording, sample_rate: int, api_key: str) -> str:
+    """Save a recording temporarily and transcribe it with OpenAI."""
     audio_path = None
     try:
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as audio_file:
@@ -103,9 +90,88 @@ def listen() -> str:
             os.unlink(audio_path)
 
 
+def listen(duration: float | None = None) -> str:
+    """Record a microphone clip and transcribe it with OpenAI."""
+    load_dotenv()
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key or api_key == "your_api_key_here":
+        raise RuntimeError("Set OPENAI_API_KEY in your local .env file first.")
+
+    sample_rate = 16_000
+    duration = duration or float(os.getenv("RECORD_SECONDS", "6"))
+    print(f"Listening for up to {duration:g} seconds...")
+    recording = sd.rec(
+        int(duration * sample_rate),
+        samplerate=sample_rate,
+        channels=1,
+        dtype="int16",
+    )
+    sd.wait()
+    return transcribe_recording(recording, sample_rate, api_key)
+
+
+def contains_wake_word(text: str) -> bool:
+    """Return whether a transcript contains the phrase 'hi GPT'."""
+    return bool(re.search(r"\bhi\s+gpt\b", text, re.IGNORECASE))
+
+
+def run_wake_word_loop(update_status, stop_event: threading.Event) -> None:
+    """Listen in short clips until stopped or 'hi GPT' is detected."""
+    while not stop_event.is_set():
+        update_status('Listening for "hi GPT"...')
+        transcript = listen(duration=2)
+        if contains_wake_word(transcript):
+            update_status("Wake word detected. Ask your question...")
+            question = listen()
+            if question.strip():
+                update_status("Thinking...")
+                answer = ask(question)
+                print(f"You asked: {question}\n{answer}")
+                AIspeak(answer)
+
+
+def start_window() -> None:
+    """Show a window that toggles wake-word listening on and off."""
+    root = tk.Tk()
+    root.title("Sunrise Bakes Assistant")
+    root.geometry("360x180")
+
+    status = tk.StringVar(value="Off")
+    stop_event = threading.Event()
+    worker = None
+
+    def update_status(message: str) -> None:
+        root.after(0, status.set, message)
+
+    def start_listening() -> None:
+        nonlocal worker
+        if worker and worker.is_alive():
+            return
+        stop_event.clear()
+        worker = threading.Thread(
+            target=run_wake_word_loop,
+            args=(update_status, stop_event),
+            daemon=True,
+        )
+        worker.start()
+        status.set('Listening for "hi GPT"...')
+
+    def stop_listening() -> None:
+        stop_event.set()
+        status.set("Off")
+
+    tk.Label(root, textvariable=status, wraplength=320).pack(pady=25)
+    tk.Button(root, text="Start listening", command=start_listening).pack()
+    tk.Button(root, text="Stop listening", command=stop_listening).pack(pady=8)
+    root.mainloop()
+
+
 if __name__ == "__main__":
-    question = " ".join(sys.argv[1:]) if len(sys.argv) >= 2 else listen()
-    print(f"You asked: {question}")
-    answer = ask(question)
-    print(answer)
-    AIspeak(answer)
+    if len(sys.argv) >= 2:
+        question = " ".join(sys.argv[1:])
+        print(f"You asked: {question}")
+        answer = ask(question)
+        print(answer)
+        AIspeak(answer)
+    else:
+        start_window()

@@ -38,9 +38,20 @@ All business data in /data is fictional sample data for a made-up bakery
 3. Copy `.env.example` to `.env` and add your API key
 4. `python src/ask.py "What is the price of a sourdough loaf?"`
 
-The answer is printed in the terminal and then converted to speech by
-OpenAI. This requires an internet connection and makes a second API request
-for the audio.
+The answer is printed in the terminal and read aloud using a voice installed
+on Windows. The text answer requires an internet connection for the OpenAI
+API; the speech step runs locally.
+
+To use voice input, run `python src/ask.py` without a question argument. A
+window lets you turn wake-word listening on or off. When listening is on, the
+program checks short microphone recordings for "hi GPT", then records and
+answers the next question. Set `RECORD_SECONDS` in `.env` to change the
+question recording length.
 
 ## What I Learned
-(Fill in as you go)
+1. Use onnx file instead of tflite bcs:
+We are already developing in Python on Windows
+ONNX Runtime is straightforward to install
+It matches the notebook’s original trained output
+TFLite is more useful later for smaller embedded devices
+The .tflite file is still valuable as a backup or for a future Raspberry Pi/embedded version.
