@@ -25,13 +25,7 @@ All business data in /data is fictional sample data for a made-up bakery
 - Transparent: open source, so you can see what happens to your data
 
 ## Roadmap
-- [done] M1: Typed Q&A from documents
-- [done] M2: Test set and accuracy score
-- [done] M3: AI voices answers (generate the text ans and convert it to MP3)
-- [done] M4: Voice input and wake word
-- [ ] M5: Proper retrieval for larger document sets
-- [ ] M6: Personal mode 
-- [ ] M7: Raspberry Pi / hardware version
+
 
 ## Setup
 1. Clone the repo
@@ -57,3 +51,20 @@ ONNX Runtime is straightforward to install
 It matches the notebook’s original trained output
 TFLite is more useful later for smaller embedded devices
 The .tflite file is still valuable as a backup or for a future Raspberry Pi/embedded version.
+
+## New Plan & Features
+-Settings include work and personal mode
+-Work mode allows for document attachments
+-Personal mode allows for general personal use
+-Add cloud voice (right now using local which is free but too robotic)
+
+## New Roadmap
+- [done] M1: Typed Q&A from documents
+- [done] M2: Test set and accuracy score
+- [done] M3: Spoken answers (generate the text ans and convert it to MP3) (local windows voice)
+- [done] M4: Voice input and wake word
+- [ ] M5: Implement cloud voice (less robotic, more API bill)
+- [ ] M6: Implement personal mode 
+- [ ] M7: Add settings function to toggle between features 
+- [ ] M8: Raspberry Pi / hardware version 
+- [ ] M9: Proper retrieval for larger document sets
