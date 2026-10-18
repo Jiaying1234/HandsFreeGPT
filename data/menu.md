@@ -9,7 +9,7 @@ last.
 
 | Item | Price | Notes |
 | --- | ---: | --- |
-| Country sourdough boule | $12 | One 700 g loaf; allow at least 24 hours for the dough |
+| Country sourdough boule | $12 | One 700 grams loaf; allow at least 24 hours for the dough |
 | Kaya coconut buns | $10 | Box of 4; made with house-style kaya, not individually wrapped |
 | Garlic herb focaccia | $14 | One tray; cut into 6 pieces |
 | Butter croissant | $4.80 | Each; best eaten on the day of pickup |
