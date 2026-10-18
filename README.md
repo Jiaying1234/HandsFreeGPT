@@ -63,8 +63,9 @@ The .tflite file is still valuable as a backup or for a future Raspberry Pi/embe
 - [done] M2: Test set and accuracy score
 - [done] M3: Spoken answers (generate the text ans and convert it to MP3) (local windows voice)
 - [done] M4: Voice input and wake word
-- [ ] M5: Implement cloud voice (less robotic, more API bill)
-- [ ] M6: Implement personal mode 
-- [ ] M7: Add settings function to toggle between features 
-- [ ] M8: Raspberry Pi / hardware version 
-- [ ] M9: Proper retrieval for larger document sets
+- [ ] M5: Add settings function to toggle between features
+- [ ] M6: Implement cloud voice (less robotic, more API bill)
+- [ ] M7: Implement personal mode
+- [ ] M8: Allow space to attach document sets for work mode
+- [ ] M9: Raspberry Pi / hardware version 
+- [ ] M10: Proper retrieval for larger document sets
