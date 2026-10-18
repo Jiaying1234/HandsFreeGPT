@@ -2,7 +2,6 @@
 
 from pathlib import Path
 import os
-import re
 import sys
 import tempfile
 import threading
@@ -13,6 +12,7 @@ from openai import OpenAI
 import pyttsx3
 import sounddevice as sd
 import soundfile as sf
+from wake_word import wait_for_wake_word
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -110,17 +110,11 @@ def listen(duration: float | None = None) -> str:
     return transcribe_recording(recording, sample_rate, api_key)
 
 
-def contains_wake_word(text: str) -> bool:
-    """Return whether a transcript contains the phrase 'hi GPT'."""
-    return bool(re.search(r"\bhi\s+gpt\b", text, re.IGNORECASE))
-
-
 def run_wake_word_loop(update_status, stop_event: threading.Event) -> None:
-    """Listen in short clips until stopped or 'hi GPT' is detected."""
+    """Wait locally for the wake word, then transcribe and answer a question."""
     while not stop_event.is_set():
-        update_status('Listening for "hi GPT"...')
-        transcript = listen(duration=2)
-        if contains_wake_word(transcript):
+        update_status('Listening locally for "yo pikachu"...')
+        if wait_for_wake_word(stop_event):
             update_status("Wake word detected. Ask your question...")
             question = listen()
             if question.strip():
@@ -154,7 +148,7 @@ def start_window() -> None:
             daemon=True,
         )
         worker.start()
-        status.set('Listening for "hi GPT"...')
+        status.set('Listening locally for "yo pikachu"...')
 
     def stop_listening() -> None:
         stop_event.set()

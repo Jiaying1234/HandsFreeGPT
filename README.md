@@ -28,9 +28,10 @@ All business data in /data is fictional sample data for a made-up bakery
 - [done] M1: Typed Q&A from documents
 - [done] M2: Test set and accuracy score
 - [done] M3: AI voices answers (generate the text ans and convert it to MP3)
-- [ ] M4: Voice input and wake word
+- [done] M4: Voice input and wake word
 - [ ] M5: Proper retrieval for larger document sets
-- [ ] M6: Raspberry Pi / hardware version
+- [ ] M6: Personal mode 
+- [ ] M7: Raspberry Pi / hardware version
 
 ## Setup
 1. Clone the repo
@@ -44,9 +45,10 @@ API; the speech step runs locally.
 
 To use voice input, run `python src/ask.py` without a question argument. A
 window lets you turn wake-word listening on or off. When listening is on, the
-program checks short microphone recordings for "hi GPT", then records and
-answers the next question. Set `RECORD_SECONDS` in `.env` to change the
-question recording length.
+local wake-word model checks the microphone for "yo pikachu", then records
+and answers the next question. Waiting audio is processed locally and is not
+sent to OpenAI. Set `RECORD_SECONDS` in `.env` to change the question
+recording length.
 
 ## What I Learned
 1. Use onnx file instead of tflite bcs:
