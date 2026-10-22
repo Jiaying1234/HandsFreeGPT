@@ -2,11 +2,16 @@
 
 from pathlib import Path
 import os
+import queue
 import sys
 import tempfile
+import time
 import threading
 import tkinter as tk
+import wave
+import winsound
 
+import numpy as np
 from dotenv import load_dotenv
 from openai import OpenAI
 import pyttsx3
@@ -64,11 +69,50 @@ def ask(question: str) -> str:
     return response.choices[0].message.content or "I could not generate an answer."
 
 
-def AIspeak(text: str) -> None:
+def speak_local(text: str) -> None:
     """Read the answer aloud using a voice installed on Windows."""
     engine = pyttsx3.init()
     engine.say(text)
     engine.runAndWait()
+
+
+def speak_cloud(text: str) -> None:
+    """Generate and play speech through the OpenAI audio API."""
+    load_dotenv()
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key or api_key == "your_api_key_here":
+        raise RuntimeError("Set OPENAI_API_KEY in your local .env file first.")
+
+    client = OpenAI(api_key=api_key)
+    response = client.audio.speech.create(
+        model=os.getenv("OPENAI_TTS_MODEL", "gpt-4o-mini-tts"),
+        voice=os.getenv("OPENAI_TTS_VOICE", "coral"),
+        input=text,
+        response_format="pcm",
+        instructions="Speak clearly, warmly, and naturally.",
+    )
+
+    audio_path = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as audio_file:
+            audio_path = audio_file.name
+        with wave.open(audio_path, "wb") as wav_file:
+            wav_file.setnchannels(1)
+            wav_file.setsampwidth(2)
+            wav_file.setframerate(24_000)
+            wav_file.writeframes(response.read())
+        winsound.PlaySound(audio_path, winsound.SND_FILENAME)
+    finally:
+        if audio_path:
+            os.unlink(audio_path)
+
+
+def speak(text: str, voice_type: str = "local") -> None:
+    """Speak an answer using the selected local or cloud voice."""
+    if voice_type == "cloud":
+        speak_cloud(text)
+    else:
+        speak_local(text)
 
 
 def transcribe_recording(recording, sample_rate: int, api_key: str) -> str:
@@ -90,8 +134,8 @@ def transcribe_recording(recording, sample_rate: int, api_key: str) -> str:
             os.unlink(audio_path)
 
 
-def listen(duration: float | None = None) -> str:
-    """Record a microphone clip and transcribe it with OpenAI."""
+def listen(duration: float | None = None, on_question_complete=None) -> str:
+    """Record until speech ends, then transcribe it with OpenAI."""
     load_dotenv()
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key or api_key == "your_api_key_here":
@@ -99,29 +143,76 @@ def listen(duration: float | None = None) -> str:
 
     sample_rate = 16_000
     duration = duration or float(os.getenv("RECORD_SECONDS", "6"))
+    frame_size = int(sample_rate * 0.1)
+    silence_threshold = float(os.getenv("QUESTION_SILENCE_THRESHOLD", "0.005"))
+    silence_seconds = float(os.getenv("QUESTION_END_SILENCE_SECONDS", "0.8"))
+    audio_queue = queue.Queue()
+
+    def receive_audio(indata, frames, time_info, status) -> None:
+        if status:
+            print(f"Microphone status: {status}")
+        audio_queue.put(indata[:, 0].copy())
+
     print(f"Listening for up to {duration:g} seconds...")
-    recording = sd.rec(
-        int(duration * sample_rate),
+    recording = []
+    speech_started = False
+    silence_started = None
+    start_time = time.monotonic()
+    with sd.InputStream(
         samplerate=sample_rate,
+        blocksize=frame_size,
         channels=1,
         dtype="int16",
-    )
-    sd.wait()
-    return transcribe_recording(recording, sample_rate, api_key)
+        callback=receive_audio,
+    ):
+        while time.monotonic() - start_time < duration:
+            try:
+                frame = audio_queue.get(timeout=0.2)
+            except queue.Empty:
+                continue
+
+            normalized_frame = frame.astype(np.float32) / np.iinfo(np.int16).max
+            volume = float(np.sqrt(np.mean(normalized_frame**2)))
+            if volume >= silence_threshold:
+                if not speech_started:
+                    speech_started = True
+                recording.append(frame)
+                silence_started = None
+            elif speech_started:
+                recording.append(frame)
+                if silence_started is None:
+                    silence_started = time.monotonic()
+                elif time.monotonic() - silence_started >= silence_seconds:
+                    break
+
+    if not speech_started:
+        print("No question detected.")
+        return ""
+    if on_question_complete:
+        on_question_complete()
+    return transcribe_recording(np.concatenate(recording), sample_rate, api_key)
 
 
-def run_wake_word_loop(update_status, stop_event: threading.Event) -> None:
+def run_wake_word_loop(
+    update_status,
+    stop_event: threading.Event,
+    get_voice_type,
+) -> None:
     """Wait locally for the wake word, then transcribe and answer a question."""
     while not stop_event.is_set():
         update_status('Listening locally for "yo pikachu"...')
         if wait_for_wake_word(stop_event):
-            update_status("Wake word detected. Ask your question...")
-            question = listen()
+            update_status("Wake word detected. Ask your question. Listening for a few seconds...")
+            question = listen(
+                on_question_complete=lambda: update_status("Heard you - thinking..."),
+            )
             if question.strip():
                 update_status("Thinking...")
                 answer = ask(question)
                 print(f"You asked: {question}\n{answer}")
-                AIspeak(answer)
+                speak(answer, get_voice_type())
+            else:
+                update_status('Listening locally for "yo pikachu"...')
 
 
 def start_window() -> None:
@@ -132,6 +223,7 @@ def start_window() -> None:
 
     status = tk.StringVar(value="Off")
     stop_event = threading.Event()
+    settings_state = {"voice_type": "local"}
     worker = None
 
     def update_status(message: str) -> None:
@@ -144,7 +236,7 @@ def start_window() -> None:
         stop_event.clear()
         worker = threading.Thread(
             target=run_wake_word_loop,
-            args=(update_status, stop_event),
+            args=(update_status, stop_event, lambda: settings_state["voice_type"]),
             daemon=True,
         )
         worker.start()
@@ -164,18 +256,24 @@ def start_window() -> None:
         settings.geometry("360x320")
 
         tk.Label(settings, text="Voice type").pack(anchor="w", padx=20, pady=(18, 4))
-        voice_type = tk.StringVar(value="local")
+        voice_type = tk.StringVar(value=settings_state["voice_type"])
+
+        def update_voice_type() -> None:
+            settings_state["voice_type"] = voice_type.get()
+
         tk.Radiobutton(
             settings,
             text="Local",
             variable=voice_type,
             value="local",
+            command=update_voice_type,
         ).pack(anchor="w", padx=35)
         tk.Radiobutton(
             settings,
             text="Cloud (higher billing)",
             variable=voice_type,
             value="cloud",
+            command=update_voice_type,
         ).pack(anchor="w", padx=35)
 
         tk.Label(settings, text="Mode").pack(anchor="w", padx=20, pady=(18, 4))
@@ -217,6 +315,6 @@ if __name__ == "__main__":
         print(f"You asked: {question}")
         answer = ask(question)
         print(answer)
-        AIspeak(answer)
+        speak(answer)
     else:
         start_window()
