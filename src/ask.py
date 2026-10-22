@@ -128,7 +128,7 @@ def start_window() -> None:
     """Show a window that toggles wake-word listening on and off."""
     root = tk.Tk()
     root.title("Sunrise Bakes Assistant")
-    root.geometry("360x180")
+    root.geometry("420x240")
 
     status = tk.StringVar(value="Off")
     stop_event = threading.Event()
@@ -157,6 +157,57 @@ def start_window() -> None:
     tk.Label(root, textvariable=status, wraplength=320).pack(pady=25)
     tk.Button(root, text="Start listening", command=start_listening).pack()
     tk.Button(root, text="Stop listening", command=stop_listening).pack(pady=8)
+
+    def show_settings() -> None:
+        settings = tk.Toplevel(root)
+        settings.title("Settings")
+        settings.geometry("360x320")
+
+        tk.Label(settings, text="Voice type").pack(anchor="w", padx=20, pady=(18, 4))
+        voice_type = tk.StringVar(value="local")
+        tk.Radiobutton(
+            settings,
+            text="Local",
+            variable=voice_type,
+            value="local",
+        ).pack(anchor="w", padx=35)
+        tk.Radiobutton(
+            settings,
+            text="Cloud (higher billing)",
+            variable=voice_type,
+            value="cloud",
+        ).pack(anchor="w", padx=35)
+
+        tk.Label(settings, text="Mode").pack(anchor="w", padx=20, pady=(18, 4))
+        mode = tk.StringVar(value="work")
+        attachment_area = tk.Frame(settings)
+        tk.Radiobutton(
+            settings,
+            text="Personal",
+            variable=mode,
+            value="personal",
+        ).pack(anchor="w", padx=35)
+        tk.Radiobutton(
+            settings,
+            text="Work",
+            variable=mode,
+            value="work",
+        ).pack(anchor="w", padx=35)
+
+        def update_attachment_option(*_args) -> None:
+            if mode.get() == "work":
+                attachment_area.pack(anchor="w", padx=55, pady=(4, 0))
+            else:
+                attachment_area.pack_forget()
+
+        mode.trace_add("write", update_attachment_option)
+        tk.Button(
+            attachment_area,
+            text="+  Attach documents",
+        ).pack()
+        update_attachment_option()
+
+    tk.Button(root, text="Settings", command=show_settings).pack(pady=8)
     root.mainloop()
 
 
