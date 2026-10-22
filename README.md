@@ -33,9 +33,9 @@ All business data in /data is fictional sample data for a made-up bakery
 3. Copy `.env.example` to `.env` and add your API key
 4. `python src/ask.py "What is the price of a sourdough loaf?"`
 
-The answer is printed in the terminal and read aloud using a voice installed
-on Windows. The text answer requires an internet connection for the OpenAI
-API; the speech step runs locally.
+The answer is printed in the terminal and read aloud using the selected voice.
+Local speech uses a voice installed on Windows. Cloud speech uses a second
+OpenAI API request and may result in additional billing.
 
 To use voice input, run `python src/ask.py` without a question argument. A
 window lets you turn wake-word listening on or off. When listening is on, the
@@ -63,7 +63,7 @@ The .tflite file is still valuable as a backup or for a future Raspberry Pi/embe
 - [done] M2: Test set and accuracy score
 - [done] M3: Spoken answers (generate the text ans and convert it to MP3) (local windows voice)
 - [done] M4: Voice input and wake word
-- [ ] M5: Add settings function to toggle between features
+- [done] M5: Add settings function to toggle between features (UI placeholder only)
 - [ ] M6: Implement cloud voice (less robotic, more API bill)
 - [ ] M7: Implement personal mode
 - [ ] M8: Allow space to attach document sets for work mode
