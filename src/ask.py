@@ -32,8 +32,8 @@ def load_documents() -> str:
     return "".join(documents)
 
 
-def ask(question: str) -> str:
-    """Send a question and the reference documents to the language model."""
+def ask(question: str, mode: str = "work") -> str:
+    """Answer a question in work mode (documents only) or personal mode (general)."""
     load_dotenv()
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key or api_key == "your_api_key_here":
@@ -41,28 +41,33 @@ def ask(question: str) -> str:
 
     client = OpenAI(api_key=api_key)
     model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-    reference_text = load_documents()
+    if mode == "personal":
+        system_prompt = (
+            "You are a helpful personal assistant. Answer the user's question from "
+            "general knowledge. Be clear and direct, and do not repeat the user's "
+            "question. If you are unsure, say so."
+        )
+    else:
+        reference_text = load_documents()
+        system_prompt = (
+            "You are the Sunrise Bakes assistant. Answer the user's question using only "
+            "the provided documents. Include relevant additional details from the "
+            "documents, such as item size, quantity, ingredients, availability, or "
+            "ordering requirements, when they helpfully clarify the answer. Do not add unrelated information or guess. If the "
+            "documents do not contain the answer, say you do not know. Answer "
+            "directly without repeating the user's question. For example, for the "
+            "question 'What are the main ingredients in the garlic herb focaccia?', "
+            "do not write 'The main ingredients in the garlic herb focaccia are ...'. "
+            "Instead, write 'Wheat flour, water, olive oil, garlic, herbs, yeast, and "
+            "salt.'\n\n"
+            f"DOCUMENTS:\n{reference_text}"
+        )
 
     response = client.chat.completions.create(
         model=model,
         temperature=0,
         messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are the Sunrise Bakes assistant. Answer the user's question using only "
-                    "the provided documents. Include relevant additional details from the "
-                    "documents, such as item size, quantity, ingredients, availability, or "
-                    "ordering requirements, when they helpfully clarify the answer. Do not add unrelated information or guess. If the "
-                    "documents do not contain the answer, say you do not know. Answer "
-                    "directly without repeating the user's question. For example, for the "
-                    "question 'What are the main ingredients in the garlic herb focaccia?', "
-                    "do not write 'The main ingredients in the garlic herb focaccia are ...'. "
-                    "Instead, write 'Wheat flour, water, olive oil, garlic, herbs, yeast, and "
-                    "salt.'\n\n"
-                    f"DOCUMENTS:\n{reference_text}"
-                ),
-            },
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": question},
         ],
     )
@@ -197,6 +202,7 @@ def run_wake_word_loop(
     update_status,
     stop_event: threading.Event,
     get_voice_type,
+    get_mode,
 ) -> None:
     """Wait locally for the wake word, then transcribe and answer a question."""
     while not stop_event.is_set():
@@ -208,7 +214,7 @@ def run_wake_word_loop(
             )
             if question.strip():
                 update_status("Thinking...")
-                answer = ask(question)
+                answer = ask(question, get_mode())
                 print(f"You asked: {question}\n{answer}")
                 speak(answer, get_voice_type())
             else:
@@ -223,7 +229,7 @@ def start_window() -> None:
 
     status = tk.StringVar(value="Off")
     stop_event = threading.Event()
-    settings_state = {"voice_type": "local"}
+    settings_state = {"voice_type": "local", "mode": "work"}
     worker = None
 
     def update_status(message: str) -> None:
@@ -236,7 +242,12 @@ def start_window() -> None:
         stop_event.clear()
         worker = threading.Thread(
             target=run_wake_word_loop,
-            args=(update_status, stop_event, lambda: settings_state["voice_type"]),
+            args=(
+                update_status,
+                stop_event,
+                lambda: settings_state["voice_type"],
+                lambda: settings_state["mode"],
+            ),
             daemon=True,
         )
         worker.start()
@@ -277,7 +288,7 @@ def start_window() -> None:
         ).pack(anchor="w", padx=35)
 
         tk.Label(settings, text="Mode").pack(anchor="w", padx=20, pady=(18, 4))
-        mode = tk.StringVar(value="work")
+        mode = tk.StringVar(value=settings_state["mode"])
         attachment_area = tk.Frame(settings)
         tk.Radiobutton(
             settings,
@@ -292,18 +303,19 @@ def start_window() -> None:
             value="work",
         ).pack(anchor="w", padx=35)
 
-        def update_attachment_option(*_args) -> None:
+        def update_mode(*_args) -> None:
+            settings_state["mode"] = mode.get()
             if mode.get() == "work":
                 attachment_area.pack(anchor="w", padx=55, pady=(4, 0))
             else:
                 attachment_area.pack_forget()
 
-        mode.trace_add("write", update_attachment_option)
+        mode.trace_add("write", update_mode)
         tk.Button(
             attachment_area,
             text="+  Attach documents",
         ).pack()
-        update_attachment_option()
+        update_mode()
 
     tk.Button(root, text="Settings", command=show_settings).pack(pady=8)
     root.mainloop()
