@@ -38,7 +38,9 @@ Local speech uses a voice installed on Windows. Cloud speech uses a second
 OpenAI API request and may result in additional billing.
 
 To use voice input, run `python src/ask.py` without a question argument. A
-window lets you turn wake-word listening on or off. When listening is on, the
+window lets you turn wake-word listening on or off. Settings chooses the mode.
+Work mode answers from the bakery documents. Personal mode answers general
+questions and does not read those documents. When listening is on, the
 local wake-word model checks the microphone for "yo pikachu", then records
 and answers the next question. Waiting audio is processed locally and is not
 sent to OpenAI. Set `RECORD_SECONDS` in `.env` to change the question
@@ -64,8 +66,8 @@ The .tflite file is still valuable as a backup or for a future Raspberry Pi/embe
 - [done] M3: Spoken answers (generate the text ans and convert it to MP3) (local windows voice)
 - [done] M4: Voice input and wake word
 - [done] M5: Add settings function to toggle between features (UI placeholder only)
-- [ ] M6: Implement cloud voice (less robotic, more API bill)
-- [ ] M7: Implement personal mode
+- [done] M6: Implement cloud voice (less robotic, more API bill)
+- [done] M7: Implement personal mode
 - [ ] M8: Allow space to attach document sets for work mode
 - [ ] M9: Raspberry Pi / hardware version 
 - [ ] M10: Proper retrieval for larger document sets

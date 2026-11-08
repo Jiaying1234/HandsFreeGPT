@@ -39,7 +39,7 @@ Dependencies: `openai`, `python-dotenv`, `pyttsx3`, `sounddevice`, `soundfile`, 
 
 `load_documents()` concatenates every `data/*.md` file (sorted by filename) into one string, each prefixed with `--- filename ---`.
 
-`ask(question)` sends that blob in the **system** prompt plus the user question. Defaults:
+`ask(question, mode="work")` sends that blob in the **system** prompt plus the user question. `mode="personal"` skips `load_documents()` and uses a general-knowledge prompt. Defaults:
 
 - model: `OPENAI_MODEL` or `gpt-4o-mini`
 - `temperature=0`
@@ -74,15 +74,15 @@ Sample rate 16 kHz, chunk 1280 samples, score threshold `0.5`. Missing files rai
 
 ## Settings UI vs real behavior
 
-`show_settings()` is mostly a placeholder (README M5 done as UI only).
+`show_settings()` stores voice type and mode for the wake-word session. Document attach is still a placeholder.
 
 | Control | Wired? |
 | --- | --- |
 | Voice: Local / Cloud | Yes, for the wake-word session |
-| Mode: Personal / Work | No. Does not change `ask()` or documents |
+| Mode: Personal / Work | Yes. Read at answer time. Personal does not load `data/`. Work uses the document prompt. Default is work. CLI typed questions stay in work mode. |
 | Work: "+ Attach documents" | Button has no `command` |
 
-Do not treat personal mode, document attach, or CLI cloud voice as finished features.
+Do not treat document attach or CLI cloud voice as finished features. Personal mode is finished for the wake-word window only.
 
 ## Environment variables
 
@@ -141,12 +141,12 @@ Do not invent pytest or CI unless asked.
 
 From `README.md` New Roadmap:
 
-- Done: M1 typed Q&A, M2 manual test set, M3 local spoken answers, M4 voice + wake word, M5 settings UI placeholder
-- Listed not done: M6 cloud voice, M7 personal mode, M8 attach document sets, M9 Raspberry Pi, M10 retrieval
+- Done: M1 typed Q&A, M2 manual test set, M3 local spoken answers, M4 voice + wake word, M5 settings UI, M6 cloud voice, M7 personal mode
+- Listed not done: M8 attach document sets, M9 Raspberry Pi, M10 retrieval
 
 Code already has cloud TTS and a working voice-type toggle in the window. README M6 is still unchecked. If you implement or mark M6, update the README to match.
 
-Planned product direction (README "New Plan"): work vs personal mode; work mode document attachments; personal mode general chat; less robotic cloud voice.
+Still planned: work-mode document attachments (M8). Personal mode and cloud voice are implemented in the window.
 
 ## Conventions for future changes
 
