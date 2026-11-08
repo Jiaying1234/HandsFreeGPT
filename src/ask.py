@@ -17,7 +17,7 @@ from openai import OpenAI
 import pyttsx3
 import sounddevice as sd
 import soundfile as sf
-from wake_word import wait_for_wake_word
+from wake_word import wait_for_wake_word, wake_word_label
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -198,16 +198,23 @@ def listen(duration: float | None = None, on_question_complete=None) -> str:
     return transcribe_recording(np.concatenate(recording), sample_rate, api_key)
 
 
+def listening_status(wake_word: str) -> str:
+    """Status text for the wake word currently selected in settings."""
+    return f'Listening locally for "{wake_word_label(wake_word)}"...'
+
+
 def run_wake_word_loop(
     update_status,
     stop_event: threading.Event,
     get_voice_type,
     get_mode,
+    get_wake_word,
 ) -> None:
     """Wait locally for the wake word, then transcribe and answer a question."""
     while not stop_event.is_set():
-        update_status('Listening locally for "yo pikachu"...')
-        if wait_for_wake_word(stop_event):
+        wake_word = get_wake_word()
+        update_status(listening_status(wake_word))
+        if wait_for_wake_word(stop_event, wake_word, get_wake_word):
             update_status("Wake word detected. Ask your question. Listening for a few seconds...")
             question = listen(
                 on_question_complete=lambda: update_status("Heard you - thinking..."),
@@ -217,8 +224,8 @@ def run_wake_word_loop(
                 answer = ask(question, get_mode())
                 print(f"You asked: {question}\n{answer}")
                 speak(answer, get_voice_type())
-            else:
-                update_status('Listening locally for "yo pikachu"...')
+            elif not stop_event.is_set():
+                update_status(listening_status(get_wake_word()))
 
 
 def start_window() -> None:
@@ -229,7 +236,7 @@ def start_window() -> None:
 
     status = tk.StringVar(value="Off")
     stop_event = threading.Event()
-    settings_state = {"voice_type": "local", "mode": "work"}
+    settings_state = {"voice_type": "local", "mode": "work", "wake_word": "yo_pikachu"}
     worker = None
 
     def update_status(message: str) -> None:
@@ -247,11 +254,12 @@ def start_window() -> None:
                 stop_event,
                 lambda: settings_state["voice_type"],
                 lambda: settings_state["mode"],
+                lambda: settings_state["wake_word"],
             ),
             daemon=True,
         )
         worker.start()
-        status.set('Listening locally for "yo pikachu"...')
+        status.set(listening_status(settings_state["wake_word"]))
 
     def stop_listening() -> None:
         stop_event.set()
@@ -264,7 +272,7 @@ def start_window() -> None:
     def show_settings() -> None:
         settings = tk.Toplevel(root)
         settings.title("Settings")
-        settings.geometry("360x320")
+        settings.geometry("360x420")
 
         tk.Label(settings, text="Voice type").pack(anchor="w", padx=20, pady=(18, 4))
         voice_type = tk.StringVar(value=settings_state["voice_type"])
@@ -285,6 +293,29 @@ def start_window() -> None:
             variable=voice_type,
             value="cloud",
             command=update_voice_type,
+        ).pack(anchor="w", padx=35)
+
+        tk.Label(settings, text="Wake word").pack(anchor="w", padx=20, pady=(18, 4))
+        wake_word = tk.StringVar(value=settings_state["wake_word"])
+
+        def update_wake_word() -> None:
+            settings_state["wake_word"] = wake_word.get()
+            if worker and worker.is_alive() and not stop_event.is_set():
+                update_status(listening_status(wake_word.get()))
+
+        tk.Radiobutton(
+            settings,
+            text="yo pikachu",
+            variable=wake_word,
+            value="yo_pikachu",
+            command=update_wake_word,
+        ).pack(anchor="w", padx=35)
+        tk.Radiobutton(
+            settings,
+            text="hi gpt",
+            variable=wake_word,
+            value="hi_gpt",
+            command=update_wake_word,
         ).pack(anchor="w", padx=35)
 
         tk.Label(settings, text="Mode").pack(anchor="w", padx=20, pady=(18, 4))

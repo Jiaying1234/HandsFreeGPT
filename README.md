@@ -41,7 +41,8 @@ To use voice input, run `python src/ask.py` without a question argument. A
 window lets you turn wake-word listening on or off. Settings chooses the mode.
 Work mode answers from the bakery documents. Personal mode answers general
 questions and does not read those documents. When listening is on, the
-local wake-word model checks the microphone for "yo pikachu", then records
+local wake-word model checks the microphone for the phrase chosen in
+Settings ("yo pikachu" or "hi gpt"), then records
 and answers the next question. Waiting audio is processed locally and is not
 sent to OpenAI. Set `RECORD_SECONDS` in `.env` to change the question
 recording length.

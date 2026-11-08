@@ -13,7 +13,7 @@ Demo domain is **Sunrise Bakes**, a fictional home bakery in Tampines, Singapore
 | Path | Role |
 | --- | --- |
 | `src/ask.py` | Q&A, STT, TTS, Tkinter window, wake-word loop |
-| `src/wake_word.py` | Local OpenWakeWord detection for "yo pikachu" |
+| `src/wake_word.py` | Local OpenWakeWord detection for "yo pikachu" or "hi gpt" |
 | `data/*.md` | Reference documents stuffed into the system prompt |
 | `tests/test_questions.md` | Manual expected answers (not pytest) |
 | `models/` | ONNX wake-word files (not in git listing; required at runtime) |
@@ -64,9 +64,10 @@ Settings radio buttons **do** persist `settings_state["voice_type"]` for the wak
 
 **STT:** after wake word, `listen()` records 16 kHz int16 audio, stops on trailing silence (`QUESTION_SILENCE_THRESHOLD` default `0.005`, `QUESTION_END_SILENCE_SECONDS` default `0.8`), max length `RECORD_SECONDS` default `6`. Transcription uses `OPENAI_TRANSCRIBE_MODEL` default `gpt-4o-mini-transcribe`. Waiting audio for the wake word is local only and must not be sent to OpenAI.
 
-**Wake word:** `wait_for_wake_word()` in `src/wake_word.py`. Custom ONNX model, phrase **"yo pikachu"**. Paths:
+**Wake word:** `wait_for_wake_word()` in `src/wake_word.py`. Settings chooses the phrase. Default is **"yo pikachu"**. **"hi gpt"** uses `models/hi_G_P_T.onnx`. Changing the choice while listening reloads that model. Shared feature models:
 
-- `models/yo_pee_kah_choo.onnx`
+- `models/yo_pee_kah_choo.onnx` — yo pikachu
+- `models/hi_G_P_T.onnx` — hi gpt
 - `models/melspectrogram.onnx`
 - `models/embedding_model.onnx`
 
@@ -79,6 +80,7 @@ Sample rate 16 kHz, chunk 1280 samples, score threshold `0.5`. Missing files rai
 | Control | Wired? |
 | --- | --- |
 | Voice: Local / Cloud | Yes, for the wake-word session |
+| Wake word: yo pikachu / hi gpt | Yes. Read while listening; the detector reloads when it changes. |
 | Mode: Personal / Work | Yes. Read at answer time. Personal does not load `data/`. Work uses the document prompt. Default is work. CLI typed questions stay in work mode. |
 | Work: "+ Attach documents" | Button has no `command` |
 
